@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title> 图片画廊 </title>
+		<script type="text/javascript" src="js/data.js" ></script>
+		<style>
+			*{margin: 0;padding: 0;}
+			body{
+				background-color: #fff;
+				color: #555;
+				font-family: "微软雅黑" , "lucida console";
+				font-size: 14px;
+				-webkit-font-smoothing: antialiased;
+			}
+			.wrap
+			{
+				width: 100%;
+				height: 800px;
+				position: absolute;
+				top: 50%;
+				margin-top: -400px;
+				background-color: #333;
+				overflow: hidden;
+				-webkit-perspective: 800px;
+			}
+			.photo
+			{
+				width: 260px;
+				height: 320px;
+				position: absolute;
+				z-index: 1;
+				box-shadow: 0 0 1px rgb(0,0,0,.1);
+			}
+			.photo .side{
+				width: 100%;
+				height: 100%;
+				background-color: #eee;
+				position: absolute;
+				top: 0;
+				right: 0;
+				padding: 20px;
+				box-sizing: border-box;
+			}
+			.photo .side-front
+			{
+				/*display: none;*/
+			}
+			.photo.side-front .image
+			{
+				width: 100%;
+				height: 250px;
+				line-height: 250px;
+				overflow: hidden;
+			}
+			.photo .side-front .image img
+			{
+				width: 100%;
+				height: 250px;
+			}
+			.photo .side-front .caption
+			{
+				text-align: center;
+				font-size: 16px;
+				line-height: 50px;
+			}
+			.photo .side-back .desc{
+				color:#666;
+				font-size:14px;
+				line-height:1.5em;
+			}
+			.photo .side-back
+			{
+				/*display: none*/
+			}
+			.photo_center{
+				left: 50%;
+				top: 50%;
+				margin-top: -160px;
+				margin-right: -160px;
+				z-index: 999;
+			}
+			.photo-wrap
+			{
+				position: absolute;
+				height: 100%;
+				width: 100%;
+				-webkit-transform-style: preserve-3d;
+				-webkit-transition:all .6s;
+			}
+			.photo-wrap .side-front
+			{
+				-webkit-transform:rotateY(0deg);
+			}
+			.photo-wrap .side-back
+			{
+				-webkit-transform:rotateY(180deg);
+			}
+			.photo-wrap .side
+			{
+				-webkit-backface-visibility: hidden;
+			}
+			.photo_front .photo-wrap
+			{
+				-webkit-transform: rotateY(0deg);
+			}
+			.photo_back .photo-wrap
+			{
+				-webkit-transform: rotateY(180deg);
+			}
+			.nav
+			{
+				width: 80%;
+				height: 30px;
+				line-height: 30px;
+				position: absolute;
+				left: 10%;
+				z-index: 999999;
+				bottom: 20px;
+			}
+			
+			.nav .i
+			{
+				width: 30px;
+				height: 30px;
+				display: inline-block;
+				vertical-align: top;
+				cursor: pointer;
+				background: #555555;
+				text-align: center;
+				border-radius: 50%;
+				margin-left: 28.5px;
+				-webkit-transform: scale(.48);
+				
+			}
+			.nav .i_current
+			{
+				-webkit-transform: scale(1);
+			}
+			.nav .i_back
+			{
+				
+			}
+		</style>
+	</head>
+	<body onselectstart="return false">
+	
+	
+		<div class="wrap" id="wrap">
+			<div class="photo photo_front" onclick="turn(this)" id="photo_{{index}}">
+				<div class="photo-wrap">
+					<div class="side side-front">
+						<p class="image"><img src="photo/{{img}}"/></p>
+						<p class="caption">{{caption}}</p>
+					</div>
+					<div class="side side-back">
+						<p class="desc">{{desc}}</p>
+					</div>
+				</div>
+			
+			</div>
+		</div>
+		
+		
+	</body>
+	<script>
+	
+//	通用函数
+		function g(selector)
+		{	
+			var method = selector.substr(0,1) == '.' ? 'getElementsByClassName' : 'getElementById';
+			
+			return document[method](selector.substr(1));
+		}
+//		取随机数
+		function random(range){
+			var max = Math.max(range[0],range[1]);
+			var min = Math.min(range[0],range[1]);
+			
+			var diff = max-min;
+			
+			var number = Math.floor(Math.random()*diff + min) ;
+			return number;
+		}
+		
+//		2、模板
+		var data = data;
+		function addPhotos()
+		{
+			var tempalte = g('#wrap').innerHTML;
+			var html = [];
+			var nav =[];
+			for(s in data){
+				var _html = tempalte
+								.replace('{{index}}',s)
+								.replace('{{img}}',data[s].img)
+								.replace('{{caption}}',data[s].caption)
+								.replace('{{desc}}',data[s].desc)
+					html.push( _html);
+					nav.push('<span id="nav' + s +'" onclick="turn(g(\'#photo_'+ s +'\'))" class="i">&nbsp;</span>')
+			}
+			html.push('<div class="nav">'+nav.join(' ')+'</div>')
+			g('#wrap').innerHTML = "";
+			g('#wrap').innerHTML = html.join('');
+			rsort(random([0,data.length]));
+		}
+		addPhotos()
+//		6.计算左右分区的范围
+
+
+		function range()
+		{
+			var range = { left:{x:[] , y:[]} , right:{ x:[] , y:[] }};
+			var wrap ={
+				w:g('#wrap').clientWidth,
+				h:g('#wrap').clientHeight
+			}
+			var photo ={
+				w:g('.photo')[0].clientWidth,
+				h:g('.photo')[0].clientHeight
+			}
+			range.left.x = [0-photo.w , wrap.w/2 - photo.w/2];
+			range.left.y = [0-photo.h, wrap.h];
+			 
+			range.right.x = [wrap.w/2 + photo.w/2 , wrap.w + photo.w/2];
+			range.right.y = range.left.y;
+			
+			
+			return range;
+		}
+		
+		
+//		5.排序海报
+		
+		function rsort (n)
+		{	
+			var _photo =g('.photo');
+			var	photos = [];
+			
+			for (var i = 0; i < _photo.length; i++) {
+				_photo[i].className = _photo[s].className.replace(/\s*photo_center\s*/,' ');
+				photos.push(_photo[i]);
+			}
+//			console.log(photos);
+			var photo_center = g('#photo_'+n);
+			photo_center.className += ' photo_center ';
+			photo_center = photos.splice(n,1);
+			
+			
+			
+			var photo_left = photos.splice(0,Math.floor(photos.length/2));
+			var photo_right = photos;
+			console.log(photo_left);
+			console.log(photo_right);
+			var ranges = range();
+			for (var i = 0; i < photo_left.length; i++) {
+				var photo = photo_left[i];
+				photo.style.left = random(ranges.left.x) + 'px';
+				photo.style.top = random(ranges.left.y) + 'px';
+				
+				photo.style['-webkit-transform'] = 'rotate('+random([-150 , 150])+'deg)';
+			}
+			for (var i = 0; i < photo_right.length; i++) {
+				var photo = photo_right[i];
+				photo.style.left = random(ranges.right.x) + 'px';
+				photo.style.top = random(ranges.right.y) + 'px';
+				photo.style['-webkit-transform'] = 'rotate('+random([-150 , 150])+'deg)';
+			}
+			var navs = g('.i');
+			for (var i = 0; i < navs.length; i++) {
+				navs[i].className = navs[i].className.replace(/\s*i_current\s*/,' ');
+				navs[i].className = navs[i].className.replace(/\s*i_back\s*/,' ');
+			}
+			g('#nav'+n).className += ' i_current ';
+		}
+//		1、翻页效果
+		function turn(e)
+		{	
+			var cls = e.className;
+			if (/photo_front/.test(cls)) {
+				cls = cls.replace(/photo_front/ , 'photo_back')
+			} else{
+				cls = cls.replace(/photo_back/ , 'photo_front')
+			}
+			return e.className = cls;
+		}
+	</script>
+</html>
